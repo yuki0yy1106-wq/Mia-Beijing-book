@@ -98,29 +98,13 @@ export const STORY_PAGES = [
     id: "p10",
     src: `${IMAGE_DIR}/p10.jpg`,
     kind: "story",
-    interactions: [
-      // 点三种食物 → 说出名字
-      { type: "bubble", x: 12, y: 62, w: 20, h: 24, hanzi: "这是包子", pinyin: "Zhè shì bāo zi", hint: "👆 点一点食物" },
-      { type: "bubble", x: 38, y: 55, w: 20, h: 24, hanzi: "这是面条", pinyin: "Zhè shì miàn tiáo" },
-      { type: "bubble", x: 68, y: 58, w: 20, h: 24, hanzi: "这是糖葫芦", pinyin: "Zhè shì táng hú lu" },
-    ],
+    interactions: [],
   },
   {
     id: "p11",
     src: `${IMAGE_DIR}/p11.jpg`,
     kind: "story",
-    interactions: [
-      {
-        // 选食物 → 「我要X！」→ 换成「好吃！」
-        type: "choose",
-        hint: "👆 帮Mia选一个",
-        foods: [
-          { x: 12, y: 62, w: 20, h: 24, name: "包子", pinyin: "bāo zi" },
-          { x: 38, y: 55, w: 20, h: 24, name: "面条", pinyin: "miàn tiáo" },
-          { x: 68, y: 58, w: 20, h: 24, name: "糖葫芦", pinyin: "táng hú lu" },
-        ],
-      },
-    ],
+    interactions: [],
   },
   {
     id: "p12",
