@@ -1,12 +1,13 @@
 import { STORY_PAGES } from "../data/pages.js";
+import { clearInteractions, mountPageInteractions } from "../book/mountInteractions.js";
 
 /**
- * Renders one story page. Future per-page interactions can be mounted
- * from `page.interactions` here without changing other views.
+ * Renders one story page and mounts its interactions (if any).
  */
-export function renderReaderPage(pageImage, pageIndex, direction = "none") {
+export async function renderReaderPage(pageImage, pageIndex, direction = "none", transition = "flip", actions = {}) {
   const page = STORY_PAGES[pageIndex];
   if (!page) return;
-  return pageImage.show(page.src, direction);
-  // Reserved: mountPageInteractions(page)
+  clearInteractions();
+  await pageImage.show(page.src, direction, transition);
+  mountPageInteractions(pageImage, page, actions);
 }

@@ -1,4 +1,5 @@
-const FLIP_MS = 900;
+const FLIP_MS = 1000;
+const SLIDE_MS = 700;
 
 export function createPageImage() {
   const stage = document.createElement("div");
@@ -16,7 +17,7 @@ export function createPageImage() {
   let currentSrc = "";
   let requestId = 0;
 
-  async function show(src, direction = "none") {
+  async function show(src, direction = "none", transition = "flip") {
     if (src === currentSrc) return;
     const id = ++requestId;
     const outgoingSrc = currentSrc;
@@ -25,10 +26,10 @@ export function createPageImage() {
     await loadImage(base.img, src);
     if (id !== requestId) return;
 
-    const shouldFlip =
+    const shouldAnimate =
       (direction === "next" || direction === "prev") && outgoingSrc;
 
-    if (!shouldFlip) {
+    if (!shouldAnimate) {
       resetFlipElement(flip.el);
       resetGroundShadow(groundShadow);
       return;
@@ -40,7 +41,11 @@ export function createPageImage() {
     ]);
     if (id !== requestId) return;
 
-    await animateFlip(flip.el, groundShadow, direction);
+    if (transition === "slide") {
+      await animateSlide(flip.el, direction);
+    } else {
+      await animateFlip(flip.el, groundShadow, direction);
+    }
     if (id !== requestId) return;
     resetFlipElement(flip.el);
     resetGroundShadow(groundShadow);
@@ -114,7 +119,14 @@ function resetFlipElement(el) {
   el.style.clipPath = "";
   el.style.webkitClipPath = "";
   el.style.zIndex = "";
-  el.classList.remove("is-flipping", "flip-next", "flip-prev");
+  el.classList.remove(
+    "is-flipping",
+    "flip-next",
+    "flip-prev",
+    "is-sliding",
+    "slide-next",
+    "slide-prev"
+  );
 
   const front = el.querySelector(".page-flip-front");
   const back = el.querySelector(".page-flip-back");
@@ -175,7 +187,7 @@ function animateFlip(flipEl, groundShadow, direction) {
 
       flipEl.style.transform = `rotateY(${baseAngle}deg)`;
 
-      const foldDepth = bendT * 50;
+      const foldDepth = bendT * 32;
       if (direction === "next") {
         front.style.clipPath = `inset(0 ${foldDepth}% 0 0)`;
         front.style.webkitClipPath = `inset(0 ${foldDepth}% 0 0)`;
@@ -192,14 +204,14 @@ function animateFlip(flipEl, groundShadow, direction) {
         if (backCrease) backCrease.style.right = `${foldDepth}%`;
       }
 
-      const shadowBlur = 6 + bendT * 48;
-      const shadowDist = 3 + bendT * 18;
-      const shadowAlpha = 0.03 + bendT * 0.35;
+      const shadowBlur = 4 + bendT * 30;
+      const shadowDist = 2 + bendT * 10;
+      const shadowAlpha = 0.02 + bendT * 0.22;
       const shadowSide = direction === "next" ? -1 : 1;
       flipEl.style.boxShadow =
         `${shadowSide * shadowDist}px ${6 + bendT * 6}px ${shadowBlur}px rgba(30, 22, 14, ${shadowAlpha})`;
 
-      const brightness = 1 - bendT * 0.42;
+      const brightness = 1 - bendT * 0.26;
       flipEl.style.filter = `brightness(${brightness})`;
 
       flipEl.style.zIndex = String(10 + Math.round(bendT * 5));
@@ -208,6 +220,36 @@ function animateFlip(flipEl, groundShadow, direction) {
       const gsScale = 0.7 + bendT * 0.35;
       groundShadow.style.transform = `scale(${gsScale})`;
 
+      if (t < 1) {
+        requestAnimationFrame(frame);
+      } else {
+        resolve();
+      }
+    }
+
+    requestAnimationFrame(frame);
+  });
+}
+
+function animateSlide(flipEl, direction) {
+  return new Promise((resolve) => {
+    const duration = SLIDE_MS;
+    const start = performance.now();
+    const dir = direction === "next" ? 1 : -1;
+    const front = flipEl.querySelector(".page-flip-front");
+    const back = flipEl.querySelector(".page-flip-back");
+
+    flipEl.classList.add("is-sliding", `slide-${direction}`);
+    flipEl.style.transition = "none";
+    // 初始位置：旧图居中，新图在右（next）或左（prev）待命
+    front.style.transform = "translateX(0%)";
+    back.style.transform = `translateX(${dir * 100}%)`;
+
+    function frame(now) {
+      const t = Math.min((now - start) / duration, 1);
+      const e = easeInOutCubic(t);
+      front.style.transform = `translateX(${dir * -100 * e}%)`;
+      back.style.transform = `translateX(${dir * (100 - 100 * e)}%)`;
       if (t < 1) {
         requestAnimationFrame(frame);
       } else {

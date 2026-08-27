@@ -335,3 +335,335 @@ body {
 .start-bubble:active {
   transform: translateX(-50%) scale(0.98);
 }
+
+/* ===== 逐页互动 ===== */
+
+.interaction-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.hotspot {
+  position: absolute;
+  pointer-events: auto;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 调试热区：地址栏加 ?debug 显示虚线框 */
+.debug-hotspots .hotspot {
+  outline: 2px dashed rgba(255, 90, 90, 0.65);
+  background: rgba(255, 90, 90, 0.07);
+}
+
+/* 点中高亮（柔和光晕） */
+.hotspot.is-found {
+  animation: found-glow 0.9s ease 1;
+}
+
+@keyframes found-glow {
+  0% { box-shadow: 0 0 0 0 rgba(255, 196, 0, 0); }
+  35% {
+    box-shadow: 0 0 0 14px rgba(255, 196, 0, 0.55), 0 0 22px 6px rgba(255, 170, 40, 0.5);
+  }
+  100% { box-shadow: 0 0 0 24px rgba(255, 196, 0, 0); }
+}
+
+/* 气泡（浮在热区上方） */
+.pop-bubble {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translate(-50%, 6px);
+  opacity: 0;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: rgba(255, 252, 245, 0.96);
+  border: 1px solid rgba(180, 165, 145, 0.4);
+  border-radius: 16px;
+  padding: 8px 16px;
+  box-shadow: 0 6px 18px rgba(70, 58, 46, 0.16);
+  white-space: nowrap;
+  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.22s ease;
+}
+
+.pop-bubble.is-show {
+  transform: translate(-50%, 0);
+  opacity: 1;
+}
+
+.pop-hanzi {
+  font-size: clamp(18px, 4vw, 34px);
+  font-weight: 700;
+  color: #4a433c;
+  letter-spacing: 0.05em;
+}
+
+.pop-pinyin {
+  font-size: clamp(12px, 2.4vw, 18px);
+  color: #8a7f72;
+  letter-spacing: 0.02em;
+}
+
+/* 底部「点一点」提示 */
+.tap-hint {
+  position: absolute;
+  bottom: 5%;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+  background: rgba(255, 255, 255, 0.82);
+  color: #6b6157;
+  font-size: clamp(13px, 2.6vw, 17px);
+  padding: 8px 18px;
+  border-radius: 999px;
+  box-shadow: 0 4px 14px rgba(70, 58, 46, 0.14);
+  animation: hint-bob 1.6s ease-in-out infinite;
+}
+
+@keyframes hint-bob {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-6px); }
+}
+
+/* 星星计数器（右上角） */
+.star-counter {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  display: flex;
+  gap: 3px;
+  pointer-events: none;
+}
+
+.star-cell {
+  font-size: clamp(16px, 3.4vw, 26px);
+  color: rgba(74, 67, 60, 0.18);
+  transition: color 0.3s ease, transform 0.3s ease;
+}
+
+.star-cell.is-on {
+  color: #f6a91b;
+  animation: star-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes star-pop {
+  0% { transform: scale(0.4); }
+  70% { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}
+
+/* 数神兽：大数字 + 圆点 */
+.count-number {
+  position: absolute;
+  top: 52%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: rgba(255, 252, 245, 0.94);
+  border: 1px solid rgba(180, 165, 145, 0.35);
+  border-radius: 18px;
+  padding: 10px 22px;
+  box-shadow: 0 6px 18px rgba(70, 58, 46, 0.16);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.count-hanzi {
+  font-size: clamp(44px, 14vw, 96px);
+  font-weight: 800;
+  color: #c9482b;
+  line-height: 1;
+  text-shadow: 0 3px 0 rgba(255, 255, 255, 0.7);
+}
+
+.count-pinyin {
+  font-size: clamp(16px, 4vw, 26px);
+  color: #8a7f72;
+  letter-spacing: 0.04em;
+}
+
+.count-number.is-show {
+  opacity: 1;
+  animation: count-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes count-pop {
+  0% { transform: translate(-50%, -50%) scale(0.6); opacity: 0; }
+  60% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+
+.count-dots {
+  position: absolute;
+  top: 62%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.count-dot {
+  width: clamp(6px, 1.6vw, 12px);
+  height: clamp(6px, 1.6vw, 12px);
+  border-radius: 50%;
+  background: rgba(74, 67, 60, 0.18);
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.count-dot.is-on {
+  background: #f6a91b;
+  transform: scale(1.25);
+}
+
+/* 完成横幅 */
+.complete-banner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 252, 245, 0.96);
+  border: 1px solid rgba(240, 180, 60, 0.5);
+  border-radius: 20px;
+  padding: 16px 28px;
+  box-shadow: 0 10px 30px rgba(70, 58, 46, 0.2);
+  pointer-events: none;
+  animation: complete-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.complete-stars {
+  font-size: clamp(22px, 6vw, 40px);
+  letter-spacing: 4px;
+}
+
+.complete-label {
+  font-size: clamp(15px, 3.2vw, 22px);
+  font-weight: 700;
+  color: #c9482b;
+  letter-spacing: 0.05em;
+}
+
+.complete-pinyin {
+  font-size: clamp(14px, 3vw, 20px);
+  color: #8a7f72;
+  letter-spacing: 0.03em;
+}
+
+.complete-banner.is-leaving {
+  animation: complete-out 0.6s ease forwards;
+}
+
+@keyframes complete-in {
+  0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+  70% { transform: translate(-50%, -50%) scale(1.08); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+
+@keyframes complete-out {
+  to { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
+}
+
+/* 对话气泡尾巴（P2 你好） */
+.pop-bubble.speech::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 9px 9px 0 9px;
+  border-style: solid;
+  border-color: rgba(255, 252, 245, 0.96) transparent transparent transparent;
+}
+
+/* 找小Kiwi：点中"疑似"目标时的温和提示（非红色、非答错） */
+.hotspot.is-miss {
+  animation: miss-glow 0.6s ease 1;
+}
+
+@keyframes miss-glow {
+  0% { box-shadow: 0 0 0 0 rgba(120, 110, 95, 0); }
+  40% { box-shadow: 0 0 0 12px rgba(120, 110, 95, 0.28); }
+  100% { box-shadow: 0 0 0 22px rgba(120, 110, 95, 0); }
+}
+
+/* 迷宫：手指滑过点亮路径 */
+.maze-track {
+  position: absolute;
+  inset: 0;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.maze-point {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: rgba(246, 169, 27, 0);
+  pointer-events: none;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.maze-point.is-on {
+  background: rgba(246, 169, 27, 0.9);
+  box-shadow: 0 0 0 6px rgba(246, 169, 27, 0.3);
+}
+
+.debug-hotspots .maze-point {
+  background: rgba(255, 90, 90, 0.25);
+  outline: 1px dashed rgba(255, 90, 90, 0.7);
+}
+
+/* 迷宫：人物图层（静止→行走，跟随脚印移动） */
+.maze-character {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  transition: left 0.3s ease, top 0.3s ease;
+  z-index: 6;
+}
+
+.maze-character img {
+  display: block;
+  width: 100%;
+  height: auto;
+  transition: opacity 0.45s ease;
+}
+
+.maze-character .char-walk {
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+}
+
+.maze-character.is-walking .char-idle {
+  opacity: 0;
+}
+
+.maze-character.is-walking .char-walk {
+  opacity: 1;
+}
+
+/* 平移转场（P13↔P14 胡同跑进长城） */
+.page-flip.is-sliding {
+  opacity: 1;
+}
+
+.page-flip.is-sliding .page-flip-back::after {
+  opacity: 0;
+}

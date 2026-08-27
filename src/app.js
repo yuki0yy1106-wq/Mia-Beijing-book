@@ -44,10 +44,11 @@ export function mountApp(root) {
     nav.render(state);
 
     turning = direction !== "none";
+    const actions = { next: () => go(() => controller.next()) };
     if (state.isCover) {
-      await renderCover(pageImage, direction);
+      await renderCover(pageImage, direction, "flip");
     } else {
-      await renderReaderPage(pageImage, state.pageIndex, direction);
+      await renderReaderPage(pageImage, state.pageIndex, direction, "flip", actions);
     }
     turning = false;
   }
