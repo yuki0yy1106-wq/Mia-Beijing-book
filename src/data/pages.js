@@ -76,11 +76,19 @@ export const STORY_PAGES = [
     interactions: [
       {
         type: "count",
-        x: 0, y: 0, w: 100, h: 55,
-        count: 10,
-        stepMs: 900,
         hint: "👆 点一点，数一数",
-        doneText: "数完啦！",
+        beasts: [
+          { x: 35, y: 16, w: 10, h: 22, hanzi: "一", pinyin: "yī" },
+          { x: 45, y: 17, w: 5, h: 21, hanzi: "二", pinyin: "èr" },
+          { x: 52, y: 17, w: 6, h: 21, hanzi: "三", pinyin: "sān" },
+          { x: 58, y: 17, w: 6, h: 21, hanzi: "四", pinyin: "sì" },
+          { x: 64, y: 17, w: 5, h: 21, hanzi: "五", pinyin: "wǔ" },
+          { x: 69, y: 17, w: 5, h: 21, hanzi: "六", pinyin: "liù" },
+          { x: 75, y: 17, w: 5, h: 21, hanzi: "七", pinyin: "qī" },
+          { x: 80, y: 17, w: 6, h: 22, hanzi: "八", pinyin: "bā" },
+          { x: 86, y: 17, w: 6, h: 22, hanzi: "九", pinyin: "jiǔ" },
+          { x: 92, y: 18, w: 7, h: 22, hanzi: "十", pinyin: "shí" },
+        ],
       },
     ],
   },
@@ -104,7 +112,35 @@ export const STORY_PAGES = [
     id: "p11",
     src: `${IMAGE_DIR}/p11.jpg`,
     kind: "story",
-    interactions: [],
+    interactions: [
+      {
+        type: "choose",
+        hint: "👆 选一种好吃的",
+        miaMouth: { x: 37, y: 50 },
+        miaBubble: { x: 14, y: 26 },
+        foods: [
+          {
+            x: 12, y: 68, w: 22, h: 20,
+            name: "包子",
+            pinyin: "bāozi",
+            img: "./public/images/food/baozi.png",
+          },
+          {
+            x: 36, y: 66, w: 28, h: 24,
+            name: "面条",
+            pinyin: "miàntiáo",
+            img: "./public/images/food/noodles.png",
+          },
+          {
+            x: 62, y: 68, w: 28, h: 20,
+            name: "糖葫芦",
+            pinyin: "tánghúlu",
+            img: "./public/images/food/tanghulu.png",
+            target: { x: 43, y: 55 },
+          },
+        ],
+      },
+    ],
   },
   {
     id: "p12",
@@ -112,7 +148,7 @@ export const STORY_PAGES = [
     kind: "story",
     interactions: [
       // 点窗外Kiwi → 追 → 自动翻到 P13
-      { type: "advance", x: 21, y: 26, w: 14, h: 18, hanzi: "小Kiwi！", pinyin: "Xiǎo Kiwi!", hint: "👆 点一点窗外", advanceMs: 900 },
+      { type: "advance", x: 16, y: 36, w: 7, h: 9, hanzi: "小Kiwi！", ruby: [{ char: "小", pinyin: "xiǎo" }], hint: "👆 点一点小Kiwi", advanceMs: 900 },
     ],
   },
   { id: "p13", src: `${IMAGE_DIR}/p13.jpg`, kind: "story", interactions: [] },
@@ -129,11 +165,11 @@ export const STORY_PAGES = [
         doneText: "找到你啦！",
         donePinyin: "Zhǎo dào nǐ la",
         decoys: [
-          { x: 4, y: 76, w: 16, h: 20, hanzi: "不是……", pinyin: "Bù shì" },
-          { x: 37, y: 61, w: 16, h: 20, hanzi: "也不是！", pinyin: "Yě bù shì" },
-          { x: 78, y: 76, w: 16, h: 20, hanzi: "再找找！", pinyin: "Zài zhǎo zhao" },
+          { x: 4, y: 76, w: 16, h: 20, hanzi: "不是", pinyin: "bú shì" },
+          { x: 37, y: 61, w: 16, h: 20, hanzi: "不是", pinyin: "bú shì" },
+          { x: 78, y: 76, w: 16, h: 20, hanzi: "再找找！", pinyin: "zài zhǎo zhao" },
         ],
-        target: { x: 68, y: 24, w: 16, h: 20, hanzi: "找到了！", pinyin: "Zhǎo dào le" },
+        target: { x: 68, y: 24, w: 16, h: 20, hanzi: "找到了！", pinyin: "zhǎo dào le" },
       },
     ],
   },
