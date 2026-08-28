@@ -1,13 +1,36 @@
 /**
- * 逐页互动（纯视觉反馈，无音频）。
+ * 逐页互动（视觉 + 音频反馈）。
  *
  * 热区坐标单位：百分比(0~100)，相对整张 5:3 画面，改数字即可微调位置。
- * 想加声音：在 tap 回调里补一句播放即可，音频放 public/audio/。
+ * 音频由 playAudio() 播放（Mia=晓伊、安安=晓萱），文件放 public/audio/。
  * 调试热区：浏览器地址栏末尾加 `?debug`，可看到热区虚线框。
  */
 
 let overlay = null;
 let activeCleanup = null;
+
+// —— 音频播放：统一管理，翻页/切换时中断上一条 ——
+let currentAudio = null;
+
+function playAudio(src) {
+  if (!src) return;
+  try {
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+      currentAudio = null;
+    }
+    const a = new Audio(src);
+    currentAudio = a;
+    a.addEventListener("ended", () => {
+      if (currentAudio === a) currentAudio = null;
+    });
+    a.addEventListener("error", () => {
+      if (currentAudio === a) currentAudio = null;
+    });
+    a.play().catch(() => {});
+  } catch (_) {}
+}
 
 // P7 神兽热区调试：改为 false 时隐藏红框（实际点击不受影响）
 const SHOW_HITBOXES = false;
@@ -17,8 +40,10 @@ export function clearInteractions() {
     overlay.remove();
     overlay = null;
   }
-  if (window.speechSynthesis) {
-    window.speechSynthesis.cancel();
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio.currentTime = 0;
+    currentAudio = null;
   }
   if (activeCleanup) {
     activeCleanup.timeouts.forEach((id) => clearTimeout(id));
@@ -177,6 +202,7 @@ function mountBubble(layer, item) {
       hintEl.remove();
       hintEl = null;
     }
+    playAudio(item.audio);
     flash(bub);
   });
 }
@@ -213,13 +239,16 @@ function mountFind(layer, item) {
         hintEl.remove();
         hintEl = null;
       }
+      playAudio(t.audio);
       flash(bub);
       hot.classList.add("is-found");
       if (!done) {
         done = true;
         state.found += 1;
         renderCounter();
-        if (state.found >= goal) showCompletion(layer, item.doneText);
+        if (state.found >= goal) {
+          showCompletion(layer, item.doneText);
+        }
       }
     });
   });
@@ -243,20 +272,9 @@ function mountCount(layer, item) {
   popup.append(popupPinyin, popupHanzi);
   layer.appendChild(popup);
 
-  // —— 语音合成（复用 P11 的 speakChinese 模式） ——
-  const speakChinese = (text, rate = 0.85) => {
-    if (!window.speechSynthesis) return;
-    try {
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang = "zh-CN";
-      u.rate = rate;
-      window.speechSynthesis.speak(u);
-    } catch (_) {}
-  };
-
   const showPopup = (beast) => {
     const cx = beast.x + beast.w / 2;
-    const topY = beast.y - 6; // 神兽头顶上方
+    const topY = beast.y - 1; // 神兽头顶上方（下移约1cm）
     popup.style.left = `${cx}%`;
     popup.style.top = `${topY}%`;
     popupPinyin.textContent = beast.pinyin || "";
@@ -300,7 +318,7 @@ function mountCount(layer, item) {
       showPopup(beast);
 
       // 播放单字语音
-      speakChinese(beast.hanzi);
+      playAudio(beast.audio);
     });
   });
 }
@@ -372,6 +390,7 @@ function mountMaze(layer, item, actions) {
           hintEl.remove();
           hintEl = null;
         }
+        playAudio(item.doneAudio);
         showCompletion(layer, item.doneText);
         setTimeout(() => actions && actions.next(), item.advanceMs || 1200);
       }
@@ -459,17 +478,6 @@ function mountChoose(layer, item) {
     el.classList.remove("is-visible");
   };
 
-  // —— 语音合成 ——
-  const speakChinese = (text, rate = 0.85) => {
-    if (!window.speechSynthesis) return;
-    try {
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang = "zh-CN";
-      u.rate = rate;
-      window.speechSynthesis.speak(u);
-    } catch (_) {}
-  };
-
   let hintEl = item.hint ? makeHint(layer, item.hint) : null;
 
   item.foods.forEach((f) => {
@@ -495,14 +503,14 @@ function mountChoose(layer, item) {
       const startX = f.x + f.w / 2;
       const startY = f.y + f.h / 2;
 
-      // 食物气泡位置：食物下方桌面区域，稍向中心偏移
+      // 食物气泡位置：默认在食物下方；部分食物太靠下会显示不全，可用 bubbleY 覆盖上移
       const foodBubbleX = startX;
-      const foodBubbleY = f.y + f.h + 4; // 食物下方
+      const foodBubbleY = f.bubbleY != null ? f.bubbleY : f.y + f.h + 4;
 
       // 1. 播放语音「我要X！」
       const wantHanzi = `我要${f.name}！`;
       const wantPinyin = `wǒ yào ${f.pinyin}`;
-      speakChinese(wantHanzi);
+      playAudio(f.audio);
 
       // 2. 在食物附近显示「我要…」气泡
       const t0 = setTimeout(() => {
@@ -542,7 +550,7 @@ function mountChoose(layer, item) {
           // 6. 消失后隐藏食物气泡，显示 Mia 气泡「好吃！」
           const t3 = setTimeout(() => {
             hideBubble(foodBubble);
-            speakChinese("好吃！");
+            playAudio(item.doneAudio);
             setBubble(miaBubble, { hanzi: "好吃！", pinyin: "hǎochī!" });
             showBubble(miaBubble);
 
@@ -592,6 +600,7 @@ function mountAdvance(layer, item, actions) {
       hintEl = null;
     }
     if (bub) flash(bub);
+    playAudio(item.audio);
     hot.classList.add("is-found");
     setTimeout(() => actions && actions.next(), item.advanceMs || 900);
   });
@@ -632,6 +641,7 @@ function mountSearch(layer, item, actions) {
         hintEl.remove();
         hintEl = null;
       }
+      playAudio(d.audio);
       flash(bub);
       // 触发生鸡动画
       if (birdEl) {
@@ -655,6 +665,7 @@ function mountSearch(layer, item, actions) {
       hintEl.remove();
       hintEl = null;
     }
+    playAudio(item.target.audio);
     flash(targetBub);
     targetHot.classList.add("is-found");
     showCompletion(layer, item.doneText, item.donePinyin);
