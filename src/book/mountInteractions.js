@@ -63,7 +63,7 @@ export function mountPageInteractions(pageImage, page, actions = {}) {
   list.forEach((item) => {
     if (item.type === "find") mountFind(layer, item);
     else if (item.type === "count") mountCount(layer, item);
-    else if (item.type === "maze") mountMaze(layer, item, actions);
+    else if (item.type === "run") mountRun(layer, item, actions);
     else if (item.type === "choose") mountChoose(layer, item);
     else if (item.type === "advance") mountAdvance(layer, item, actions);
     else if (item.type === "search") mountSearch(layer, item, actions);
@@ -323,109 +323,108 @@ function mountCount(layer, item) {
   });
 }
 
-/* P5：走迷宫 → 人物(静止→行走)跟着脚印走，手指沿路径划过各节点，到出口自动翻页 */
-function mountMaze(layer, item, actions) {
-  const track = document.createElement("div");
-  track.className = "maze-track";
+/* P5：奔跑互动 → 静止人物在入口，依次点击4个光点热区，人物跑过去，到出口自动翻页 */
+function mountRun(layer, item, actions) {
+  const steps = item.steps || [];
+  if (steps.length === 0) return;
 
-  item.waypoints.forEach((wp) => {
-    const dot = document.createElement("div");
-    dot.className = "maze-point";
-    dot.style.left = `${wp.x}%`;
-    dot.style.top = `${wp.y}%`;
-    track.appendChild(dot);
-  });
+  const char = item.character || {};
+  const startX = char.x != null ? char.x : steps[0].x;
+  const startY = char.y != null ? char.y : steps[0].y;
 
-  layer.appendChild(track);
+  // —— 人物图层：入口处显示静止人物，跑动时切换为行走人物 ——
+  const charEl = document.createElement("div");
+  charEl.className = "run-character";
+  charEl.style.width = `${char.w || 16}%`;
+  charEl.style.left = `${startX}%`;
+  charEl.style.top = `${startY}%`;
 
-  // 人物图层：左下角显示静止人物；开始互动后丝滑切换为行走人物并跟着脚印移动
-  let charEl = null;
-  if (item.character) {
-    const start = item.waypoints[0] || { x: 0, y: 0 };
-    charEl = document.createElement("div");
-    charEl.className = "maze-character";
+  const idle = document.createElement("img");
+  idle.className = "char-idle";
+  idle.src = char.idle || "";
+  idle.alt = "";
+  idle.draggable = false;
 
-    const idle = document.createElement("img");
-    idle.className = "char-idle";
-    idle.src = item.character.idle;
-    idle.alt = "";
-    idle.draggable = false;
+  const walk = document.createElement("img");
+  walk.className = "char-walk";
+  walk.src = char.walk || "";
+  walk.alt = "";
+  walk.draggable = false;
 
-    const walk = document.createElement("img");
-    walk.className = "char-walk";
-    walk.src = item.character.walk;
-    walk.alt = "";
-    walk.draggable = false;
-
-    charEl.append(idle, walk);
-    charEl.style.width = `${item.character.w || 12}%`;
-    charEl.style.left = `${item.character.x != null ? item.character.x : start.x}%`;
-    charEl.style.top = `${item.character.y != null ? item.character.y : start.y}%`;
-    layer.appendChild(charEl);
-  }
+  charEl.append(idle, walk);
+  layer.appendChild(charEl);
 
   let hintEl = item.hint ? makeHint(layer, item.hint) : null;
-  let idx = 0;
-  let done = false;
-  const threshold = item.threshold || 9;
+  let reached = 0;
+  let busy = false;
+  const dots = [];
+  const hotspots = [];
 
-  const moveChar = (x, y) => {
-    if (!charEl) return;
-    charEl.style.left = `${x}%`;
-    charEl.style.top = `${y}%`;
+  // 只激活「下一个」目标光点
+  const setActive = (i) => {
+    hotspots.forEach((h, k) => h.classList.toggle("is-active", k === i));
+    dots.forEach((d, k) => d.classList.toggle("is-active", k === i));
   };
 
-  const hit = (px, py) => {
-    if (done || idx >= item.waypoints.length) return;
-    const wp = item.waypoints[idx];
-    const dx = px - wp.x;
-    const dy = py - wp.y;
-    if (dx * dx + dy * dy <= threshold * threshold) {
-      track.children[idx].classList.add("is-on");
-      moveChar(wp.x, wp.y);
-      idx += 1;
-      if (idx >= item.waypoints.length) {
-        done = true;
-        if (hintEl) {
-          hintEl.remove();
-          hintEl = null;
-        }
-        playAudio(item.doneAudio);
-        showCompletion(layer, item.doneText);
-        setTimeout(() => actions && actions.next(), item.advanceMs || 1200);
+  steps.forEach((s, i) => {
+    const dot = document.createElement("div");
+    dot.className = "run-target";
+    dot.style.left = `${s.x}%`;
+    dot.style.top = `${s.y}%`;
+    layer.appendChild(dot);
+    dots.push(dot);
+
+    const bw = s.w || 12;
+    const bh = s.h || 18;
+    const hot = makeHotspot(layer, {
+      x: s.x - bw / 2,
+      y: s.y - bh / 2,
+      w: bw,
+      h: bh,
+    });
+    hot.classList.add("run-hotspot");
+    hotspots.push(hot);
+
+    tap(hot, () => {
+      if (busy || i !== reached) return;
+      busy = true;
+      if (hintEl) {
+        hintEl.remove();
+        hintEl = null;
       }
-    }
-  };
+      setActive(-1);
+      dot.classList.add("is-on");
 
-  const toPercent = (e) => {
-    const rect = track.getBoundingClientRect();
-    const px = ((e.clientX - rect.left) / rect.width) * 100;
-    const py = ((e.clientY - rect.top) / rect.height) * 100;
-    return { px, py };
-  };
+      // 静止 → 行走
+      charEl.classList.add("is-running");
 
-  let dragging = false;
-  track.addEventListener("pointerdown", (e) => {
-    dragging = true;
-    if (track.setPointerCapture) track.setPointerCapture(e.pointerId);
-    if (hintEl) {
-      hintEl.remove();
-      hintEl = null;
-    }
-    if (charEl) charEl.classList.add("is-walking");
-    const { px, py } = toPercent(e);
-    hit(px, py);
+      // 等速奔跑：距离越大用时越长
+      const fromX = reached === 0 ? startX : steps[reached - 1].x;
+      const fromY = reached === 0 ? startY : steps[reached - 1].y;
+      const dist = Math.hypot(s.x - fromX, s.y - fromY);
+      const ms = Math.max(520, Math.round(dist * 28));
+
+      charEl.style.transitionDuration = `${ms}ms`;
+      charEl.style.left = `${s.x}%`;
+      charEl.style.top = `${s.y}%`;
+
+      setTimeout(() => {
+        // 行走 → 静止
+        charEl.classList.remove("is-running");
+        reached += 1;
+        busy = false;
+        if (reached >= steps.length) {
+          playAudio(item.doneAudio);
+          showCompletion(layer, item.doneText);
+          setTimeout(() => actions && actions.next(), item.advanceMs || 1200);
+        } else {
+          setActive(reached);
+        }
+      }, ms);
+    });
   });
-  track.addEventListener("pointermove", (e) => {
-    if (!dragging) return;
-    const { px, py } = toPercent(e);
-    hit(px, py);
-  });
-  const stop = () => {
-    dragging = false;
-  };
-  track.addEventListener("pointerup", stop);
-  track.addEventListener("pointercancel", stop);
+
+  setActive(0);
 }
 
 /* P11：选食物 → 语音 + 气泡 + 食物飞行动画 */

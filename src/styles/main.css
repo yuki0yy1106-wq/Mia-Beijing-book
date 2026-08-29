@@ -719,6 +719,82 @@ body {
   opacity: 1;
 }
 
+/* P5 奔跑：人物（静止→行走，点击光点热区跑过去） */
+.run-character {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  pointer-events: none;
+  transition: left 0.6s linear, top 0.6s linear;
+  z-index: 6;
+}
+
+.run-character img {
+  display: block;
+  width: 100%;
+  height: auto;
+  transition: opacity 0.3s ease;
+}
+
+.run-character .char-walk {
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+}
+
+.run-character.is-running .char-idle {
+  opacity: 0;
+}
+
+.run-character.is-running .char-walk {
+  opacity: 1;
+  animation: run-step 0.36s ease-in-out infinite;
+}
+
+@keyframes run-step {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5%); }
+}
+
+/* 目标光点：均匀分布，当前可点的会呼吸发光 */
+.run-target {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: rgba(246, 169, 27, 0.5);
+  box-shadow: 0 0 0 4px rgba(246, 169, 27, 0.16);
+  pointer-events: none;
+  z-index: 5;
+  transition: background 0.25s ease, box-shadow 0.25s ease;
+}
+
+.run-target.is-active {
+  background: rgba(246, 169, 27, 0.95);
+  animation: run-pulse 1.1s ease-in-out infinite;
+}
+
+.run-target.is-on {
+  background: rgba(246, 169, 27, 1);
+  box-shadow: 0 0 0 9px rgba(246, 169, 27, 0.32);
+}
+
+@keyframes run-pulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  50% { transform: translate(-50%, -50%) scale(1.55); }
+}
+
+/* 热区激活提示环 */
+.run-hotspot.is-active {
+  animation: run-ring 1.1s ease-in-out infinite;
+}
+
+@keyframes run-ring {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(246, 169, 27, 0); }
+  50% { box-shadow: 0 0 0 12px rgba(246, 169, 27, 0.26); }
+}
+
 /* 平移转场（P13↔P14 胡同跑进长城） */
 .page-flip.is-sliding {
   opacity: 1;

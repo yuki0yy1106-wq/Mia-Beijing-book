@@ -29,26 +29,26 @@ export const STORY_PAGES = [
   { id: "p4", src: `${IMAGE_DIR}/p4.jpg`, kind: "story", interactions: [] },
   {
     id: "p5",
-    src: `${IMAGE_DIR}/p5.jpg`,
+    src: `${IMAGE_DIR}/p5.png`,
     kind: "story",
     interactions: [
       {
-        // 走迷宫：静止人物→行走人物，跟着脚印从入口走到出口自动翻页
-        type: "maze",
-        hint: "👆 沿着脚印走迷宫",
-        doneText: "走到出口啦！",
-        doneAudio: `${AUDIO_DIR}/mia-p5-done.mp3`,
+        // 奔跑互动：静止人物在入口，依次点击4个光点热区，人物跑过去，到出口自动翻页
+        type: "run",
+        hint: "👆 点光点，跟着跑",
+        doneText: "太棒了",
         advanceMs: 1200,
-        threshold: 9,
-        waypoints: [
-          { x: 14, y: 86 }, // 左下入口
-          { x: 24, y: 74 },
-          { x: 34, y: 62 },
-          { x: 30, y: 50 },
-          { x: 44, y: 44 },
-          { x: 52, y: 34 },
-          { x: 64, y: 27 },
-          { x: 76, y: 18 }, // 右上红门出口
+        character: {
+          idle: "./public/images/p5-idle.png", // 静止（Mia + 安安并排）
+          walk: "./public/images/p5-walk.png", // 行走
+          x: 16, y: 84, // 入口（人物脚底位置）
+          w: 16, // 两个小女孩并排，宽度百分比
+        },
+        steps: [
+          { x: 42, y: 60 }, // 热区1
+          { x: 83, y: 56 }, // 热区2
+          { x: 90, y: 39 }, // 热区3
+          { x: 87, y: 5 }, // 热区4
         ],
       },
     ],
