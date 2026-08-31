@@ -194,6 +194,10 @@ function showCompletion(layer, text = "太棒了！", pinyin) {
 function mountBubble(layer, item) {
   const hot = makeHotspot(layer, item);
   const bub = makeBubble(hot, item);
+  if (item.bubbleDir === "down") {
+    bub.style.bottom = "auto";
+    bub.style.top = "100%";
+  }
   if (item.speech) bub.classList.add("speech");
   let hintEl = item.hint ? makeHint(layer, item.hint) : null;
 
@@ -448,39 +452,20 @@ function mountChoose(layer, item) {
   miaBubble.style.top = `${miaBubblePos.y}%`;
   layer.appendChild(miaBubble);
 
-  // —— 食物附近的「我要…」气泡（动态，每次点击更新位置） ——
-  const foodBubble = document.createElement("div");
-  foodBubble.className = "food-bubble";
-  layer.appendChild(foodBubble);
+  const showBubble = (el) => el.classList.add("is-visible");
+  const hideBubble = (el) => el.classList.remove("is-visible");
 
-  const setBubble = (el, { hanzi, pinyin }) => {
-    el.innerHTML = "";
-    if (pinyin) {
-      const p = document.createElement("span");
-      p.className = "pop-pinyin";
-      p.textContent = pinyin;
-      el.appendChild(p);
-    }
-    if (hanzi) {
-      const h = document.createElement("span");
-      h.className = "pop-hanzi";
-      h.textContent = hanzi;
-      el.appendChild(h);
-    }
-  };
-
-  const showBubble = (el) => {
-    el.classList.add("is-visible");
-  };
-
-  const hideBubble = (el) => {
-    el.classList.remove("is-visible");
-  };
-
+  // —— 每个食物各自的「我要…」气泡（独立存在，显示后持续保留） ——
   let hintEl = item.hint ? makeHint(layer, item.hint) : null;
 
   item.foods.forEach((f) => {
     const hot = makeHotspot(layer, f);
+
+    // 为每个食物创建专属气泡（只创建一次，重复点击复用）
+    const foodBubble = document.createElement("div");
+    foodBubble.className = "food-bubble";
+    layer.appendChild(foodBubble);
+    let bubbleShown = false;
 
     // 悬停微反馈
     hot.addEventListener("mouseenter", () => {
@@ -511,14 +496,14 @@ function mountChoose(layer, item) {
       const wantPinyin = `wǒ yào ${f.pinyin}`;
       playAudio(f.audio);
 
-      // 2. 在食物附近显示「我要…」气泡
-      const t0 = setTimeout(() => {
+      // 2. 在食物附近显示「我要…」气泡（持续保留，不因下次点击其他食物而隐藏）
+      if (!bubbleShown) {
         foodBubble.style.left = `${foodBubbleX}%`;
         foodBubble.style.top = `${foodBubbleY}%`;
         setBubble(foodBubble, { hanzi: wantHanzi, pinyin: wantPinyin });
         showBubble(foodBubble);
-      }, 200);
-      cleanup.timeouts.push(t0);
+        bubbleShown = true;
+      }
 
       // 3. 创建食物并播放飞行动画
       const t1 = setTimeout(() => {
@@ -546,9 +531,8 @@ function mountChoose(layer, item) {
         const t2 = setTimeout(() => {
           food.classList.add("is-eating");
 
-          // 6. 消失后隐藏食物气泡，显示 Mia 气泡「好吃！」
+          // 6. 显示 Mia 气泡「好吃！」（食物选择气泡保持显示不自动隐藏）
           const t3 = setTimeout(() => {
-            hideBubble(foodBubble);
             playAudio(item.doneAudio);
             setBubble(miaBubble, { hanzi: "好吃！", pinyin: "hǎochī!" });
             showBubble(miaBubble);

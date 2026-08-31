@@ -110,9 +110,9 @@ export const STORY_PAGES = [
     kind: "story",
     interactions: [
       // 点三种食物 → 说出名字
-      { type: "bubble", x: 12, y: 62, w: 20, h: 24, hanzi: "这是包子", pinyin: "Zhè shì bāozi", audio: `${AUDIO_DIR}/anan-p10-baozi.mp3`, hint: "👆 点一点食物" },
-      { type: "bubble", x: 38, y: 55, w: 20, h: 24, hanzi: "这是面条", pinyin: "Zhè shì miàntiáo", audio: `${AUDIO_DIR}/anan-p10-miantiao.mp3` },
-      { type: "bubble", x: 68, y: 58, w: 20, h: 24, hanzi: "这是糖葫芦", pinyin: "Zhè shì tánghúlu", audio: `${AUDIO_DIR}/anan-p10-tanghulu.mp3` },
+      { type: "bubble", x: 12, y: 62, w: 20, h: 24, hanzi: "这是包子", pinyin: "Zhè shì bāozi", audio: `${AUDIO_DIR}/anan-p10-baozi.mp3`, hint: "👆 点一点食物", bubbleDir: "down" },
+      { type: "bubble", x: 38, y: 55, w: 20, h: 24, hanzi: "这是面条", pinyin: "Zhè shì miàntiáo", audio: `${AUDIO_DIR}/anan-p10-miantiao.mp3`, bubbleDir: "down" },
+      { type: "bubble", x: 68, y: 58, w: 20, h: 24, hanzi: "这是糖葫芦", pinyin: "Zhè shì tánghúlu", audio: `${AUDIO_DIR}/anan-p10-tanghulu.mp3`, bubbleDir: "down" },
     ],
   },
   {
